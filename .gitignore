@@ -1,0 +1,5 @@
+*~
+build/
+dist/
+*.pyc
+skl1.egg-info
