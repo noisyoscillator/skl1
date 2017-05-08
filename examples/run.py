@@ -32,7 +32,8 @@ x, v = 0, 0
 interval = 10
 dt = 0.01
 
-x, v = skl1.integrate(x, v, 1, dt, interval, args.steps, f, g, 0, (1, seed))
+x, v = skl1.integrate(x, v, 1, dt, interval, args.steps, f, g, seed)
+
 N = len(v)
 t = dt*interval*np.arange(N)
 

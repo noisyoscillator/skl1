@@ -1,9 +1,15 @@
 from setuptools import setup, Extension
 from Cython.Build import cythonize
 
+try:
+    import threefry
+    threefry_include = threefry.get_include()
+except:
+    threefry_include = ''
+
 skl1_ext = cythonize(Extension("skl1._euler",
-                     sources=["skl1/threefry.c", "skl1/_euler.pyx"],
-                     include_dirs=["skl1"],
+                     sources=["skl1/_euler.pyx"],
+                     include_dirs=["skl1", threefry_include],
                      ))
 
 setup(name='skl1',
@@ -13,5 +19,5 @@ setup(name='skl1',
       license='BSD',
       packages=['skl1'],
       ext_modules = skl1_ext,
-      setup_requires=['cython'],
+      setup_requires=['cython', 'threefry'],
       )
