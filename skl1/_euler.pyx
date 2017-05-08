@@ -5,12 +5,21 @@ from libc.stdint cimport uint64_t
 
 from threefry cimport rng
 
-cdef class MyFunctionClass:
+
+cdef class cyfunc_d_d:
     cpdef double force(self, double x):
         return 0
 
 
-cdef integrate_inner(double *x, double *v, double D, double dt, int n, MyFunctionClass f, MyFunctionClass g, rng gen):
+cdef class pyfunc_d_d(cyfunc_d_d):
+    cdef object py_force
+    cpdef double force(self, double x):
+        return self.py_force(x)
+    def __init__(self, force):
+        self.py_force = force
+
+
+cdef integrate_inner(double *x, double *v, double D, double dt, int n, cyfunc_d_d f, cyfunc_d_d g, rng gen):
     cdef int i
     cdef double in_x  = x[0]
     cdef double in_v = v[0]
@@ -25,32 +34,24 @@ cdef integrate_inner(double *x, double *v, double D, double dt, int n, MyFunctio
     v[0] = in_v
 
 
-cdef class MF_py(MyFunctionClass):
-    cdef object py_force
-    cpdef double force(self, double x):
-        return self.py_force(x)
-    def __init__(self, force):
-        self.py_force = force
-
-
 def integrate(double x, double v, double D, double dt, int steps, int n, f, g, seed):
-    cdef MF_py py_f, py_g
+    cdef pyfunc_d_d py_f, py_g
     cdef int i
     r = rng(seed)
 
-    if isinstance(f, MyFunctionClass):
+    if isinstance(f, cyfunc_d_d):
         py_f = f
     elif callable(f):
-        py_f = MF_py(f)
+        py_f = pyfunc_d_d(f)
     else:
-        raise ValueError("f should be a callable or a MyFunctionClass")
+        raise ValueError("f should be a callable or a cyfunc_d_d")
 
-    if isinstance(g, MyFunctionClass):
+    if isinstance(g, cyfunc_d_d):
         py_g = g
     elif callable(g):
-        py_g = MF_py(g)
+        py_g = pyfunc_d_d(g)
     else:
-        raise ValueError("g should be a callable or a MyFunctionClass")
+        raise ValueError("g should be a callable or a cyfunc_d_d")
 
     cdef double[:] x_out = np.empty(n, dtype=float)
     cdef double[:] v_out = np.empty(n, dtype=float)
