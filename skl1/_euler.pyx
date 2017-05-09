@@ -9,6 +9,8 @@ from threefry cimport rng
 cdef class cyfunc_d_d:
     cpdef double force(self, double x):
         return 0
+    def __cinit__(self):
+        pass
 
 
 cdef class pyfunc_d_d(cyfunc_d_d):
@@ -19,14 +21,22 @@ cdef class pyfunc_d_d(cyfunc_d_d):
         self.py_force = force
 
 
-cdef integrate_inner(double *x, double *v, double D, double dt, int n, cyfunc_d_d f, cyfunc_d_d g, rng gen):
+cdef class linear_friction(cyfunc_d_d):
+    cdef double gamma
+    def __init__(self, gamma):
+        self.gamma = gamma
+    cpdef double force(self, double x):
+        return -self.gamma*x
+
+
+cdef integrate_inner(double *x, double *v, double D, double dt, int interval, cyfunc_d_d f, cyfunc_d_d g, rng gen):
     cdef int i
     cdef double in_x  = x[0]
     cdef double in_v = v[0]
     cdef double x_tmp, noise
 
     noise = sqrt(2*D*dt)
-    for i in range(n):
+    for i in range(interval):
         x_tmp = in_x
         in_x = in_x + in_v*dt
         in_v = in_v + (f.force(x_tmp) + g.force(in_v))*dt + noise*gen.random_normal()
@@ -34,30 +44,36 @@ cdef integrate_inner(double *x, double *v, double D, double dt, int n, cyfunc_d_
     v[0] = in_v
 
 
-def integrate(double x, double v, double D, double dt, int steps, int n, f, g, seed):
-    cdef pyfunc_d_d py_f, py_g
+def integrate(double x, double v, double D, double dt, int interval, int steps, f=None, g=None, seed=None):
+    cdef cyfunc_d_d py_f, py_g
     cdef int i
     r = rng(seed)
 
-    if isinstance(f, cyfunc_d_d):
+    if f is None:
+        py_f = cyfunc_d_d()
+    elif isinstance(f, cyfunc_d_d):
         py_f = f
     elif callable(f):
         py_f = pyfunc_d_d(f)
     else:
         raise ValueError("f should be a callable or a cyfunc_d_d")
 
-    if isinstance(g, cyfunc_d_d):
+    if g is None:
+        py_g = cyfunc_d_d()
+    elif isinstance(g, int) or isinstance(g, float):
+        py_g = linear_friction(g)
+    elif isinstance(g, cyfunc_d_d):
         py_g = g
     elif callable(g):
         py_g = pyfunc_d_d(g)
     else:
         raise ValueError("g should be a callable or a cyfunc_d_d")
 
-    cdef double[:] x_out = np.empty(n, dtype=float)
-    cdef double[:] v_out = np.empty(n, dtype=float)
+    cdef double[:] x_out = np.empty(steps, dtype=float)
+    cdef double[:] v_out = np.empty(steps, dtype=float)
 
-    for i in range(n):
-        integrate_inner(&x, &v, D, dt, steps, py_f, py_g, r)
+    for i in range(steps):
+        integrate_inner(&x, &v, D, dt, interval, py_f, py_g, r)
         x_out[i] = x
         v_out[i] = v
 
