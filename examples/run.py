@@ -30,22 +30,26 @@ D = args.T*args.gamma
 
 x, v = skl1.integrate(0, 0, D=D, dt=dt, interval=interval, steps=args.steps, g=args.gamma, seed=seed)
 
+# Display the results
 N = len(v)
 t = dt*interval*np.arange(N)
 
 ax1 = plt.subplot(311)
 plt.plot(t, x)
+plt.ylabel(r'$x$')
 ax2 = plt.subplot(312, sharex=ax1)
 plt.plot(t, v)
+plt.ylabel(r'$v$')
 
 plt.subplot(313)
 
 fft_cor = scipy.signal.fftconvolve(v, v[::-1])[N-1:]
 fft_cor /= (N - np.arange(N))
 
-idx_max = int(10/(args.gamma*interval*dt))
-
-plt.plot(t[:idx_max], fft_cor[:idx_max], 'k-', lw=2)
-plt.plot(t[:idx_max], args.T*np.exp(-args.gamma*t[:idx_max]))
+plt.plot(t, fft_cor, 'k-', lw=2, label='simulation')
+plt.plot(t, args.T*np.exp(-args.gamma*t), label=r'$T e^{-\gamma t}$')
+plt.ylabel(r'$\langle v v(\tau) \rangle$')
+plt.xlim(0, 5/args.gamma)
+plt.legend(loc='upper right')
 
 plt.show()
