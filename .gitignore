@@ -3,3 +3,5 @@ build/
 dist/
 *.pyc
 skl1.egg-info
+skl1/_euler.c
+skl1/_euler.html
