@@ -28,7 +28,9 @@ interval = 10
 dt = 0.01
 D = args.T*args.gamma
 
-x, v = skl1.integrate(0, 0, D=D, dt=dt, interval=interval, steps=args.steps, g=args.gamma, seed=seed)
+x, v, moments = skl1.integrate(0, 0, D=D, dt=dt, interval=interval, steps=args.steps, g=args.gamma, seed=seed)
+
+print(moments.mu_v())
 
 # Display the results
 N = len(v)
