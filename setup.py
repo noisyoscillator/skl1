@@ -7,8 +7,8 @@ try:
 except:
     threefry_include = ''
 
-skl1_ext = cythonize(Extension("skl1._euler",
-                     sources=["skl1/_euler.pyx"],
+skl1_ext = cythonize(Extension("skl1.euler",
+                     sources=["skl1/euler.pyx"],
                      include_dirs=["skl1", threefry_include],
                      ))
 
