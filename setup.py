@@ -20,4 +20,5 @@ setup(name='skl1',
       packages=['skl1'],
       ext_modules = skl1_ext,
       setup_requires=['cython', 'threefry'],
+      package_data={'skl1': ['euler.pxd']},
       )

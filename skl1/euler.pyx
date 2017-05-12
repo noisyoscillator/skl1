@@ -6,9 +6,6 @@ from libc.stdint cimport uint64_t
 from threefry cimport rng
 
 cdef class moments_t:
-    cdef double mu
-    cdef double v
-    cdef int n
     def __cinit__(self):
         self.mu = 0
         self.v = 0
@@ -31,7 +28,6 @@ cdef class cyfunc_d_d:
 
 
 cdef class pyfunc_d_d(cyfunc_d_d):
-    cdef object py_force
     cpdef double force(self, double x):
         return self.py_force(x)
     def __init__(self, force):
@@ -39,7 +35,6 @@ cdef class pyfunc_d_d(cyfunc_d_d):
 
 
 cdef class linear_friction(cyfunc_d_d):
-    cdef double gamma
     def __init__(self, gamma):
         self.gamma = gamma
     cpdef double force(self, double x):
