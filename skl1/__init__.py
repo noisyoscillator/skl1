@@ -1,6 +1,6 @@
 import numpy as np
 
-from .euler import integrate
+from .euler import integrate, integrate_nd
 
 def euler1_xv(x0, v0, gamma, m, f, D, dt, nsteps, nsubsteps):
     x = np.array(x0, copy=True)

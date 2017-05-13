@@ -40,6 +40,29 @@ cdef class linear_friction(cyfunc_d_d):
     cpdef double force(self, double x):
         return -self.gamma*x
 
+cdef class cyfunc_nd:
+    cpdef void force(self, double[::1] x, double[::1] f):
+        cdef int i
+        for i in range(x.ndim):
+            f[i] = 0
+    def __init__(self):
+        pass
+
+cdef class pyfunc_nd(cyfunc_nd):
+    cpdef void force(self, double[::1] x, double[::1] f):
+        self.py_force(x, f)
+    def __init__(self, force):
+        self.py_force = force
+
+
+cdef class linear_friction_nd(cyfunc_nd):
+    def __init__(self, gamma):
+        self.gamma = gamma
+    cpdef void force(self, double[::1] x, double[::1] f):
+        cdef int i
+        for i in range(x.shape[0]):
+            f[i] = -self.gamma*x[i]
+
 
 cdef integrate_inner(double *x, double *v, double D, double dt, int interval, cyfunc_d_d f, cyfunc_d_d g, rng gen, moments_t m):
     cdef int i
@@ -95,3 +118,58 @@ def integrate(double x, double v, double D, double dt, int interval, int steps, 
             x, v = callback(x, v)
 
     return np.asarray(x_out), np.asarray(v_out), moments
+
+
+
+
+def integrate_nd(double[::1] x, double[::1] v, double D, double dt, int interval, int steps, f=None, g=None, seed=None):
+    cdef cyfunc_nd cy_f, cy_g
+    cdef int t_idx1, t_idx2, j, n_dims
+
+    assert x.shape[0]==v.shape[0]
+
+    r = rng(seed)
+
+    if f is None:
+        cy_f = cyfunc_nd()
+    elif isinstance(f, cyfunc_nd):
+        cy_f = f
+    elif callable(f):
+        cy_f = pyfunc_nd(f)
+    else:
+        raise ValueError("f should be a callable or a cyfunc_nd")
+
+    if g is None:
+        cy_g = cyfunc_nd()
+    elif isinstance(g, int) or isinstance(g, float):
+        cy_g = linear_friction_nd(g)
+    elif isinstance(g, cyfunc_nd):
+        cy_g = g
+    elif callable(g):
+        cy_g = pyfunc_nd(g)
+    else:
+        raise ValueError("g should be a callable or a cyfunc_nd")
+
+    noise = sqrt(2*D*dt)
+    n_dims = x.shape[0]
+
+    cdef double[::1] force = np.zeros(n_dims)
+
+    cdef double[:,::1] x_out = np.empty((steps, n_dims), dtype=float)
+    cdef double[:,::1] v_out = np.empty((steps, n_dims), dtype=float)
+
+    for t_idx1 in range(steps):
+        for t_idx2 in range(interval):
+            for j in range(n_dims):
+                x[j] = x[j] + v[j]*dt
+            cy_f.force(x, force)
+            for j in range(n_dims):
+                v[j] = v[j] + force[j]*dt
+            cy_g.force(v, force)
+            for j in range(n_dims):
+                v[j] = v[j] + force[j]*dt + noise*r.random_normal()
+
+        x_out[t_idx1] = x
+        v_out[t_idx1] = v
+
+    return np.asarray(x_out), np.asarray(v_out)

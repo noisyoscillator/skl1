@@ -23,3 +23,15 @@ cdef class linear_friction(cyfunc_d_d):
 
 
 cdef integrate_inner(double *x, double *v, double D, double dt, int interval, cyfunc_d_d f, cyfunc_d_d g, rng gen, moments_t m)
+
+
+cdef class cyfunc_nd:
+    cpdef void force(self, double[::1] x, double[::1] f)
+
+
+cdef class pyfunc_nd(cyfunc_nd):
+    cdef object py_force
+    cpdef void force(self, double[::1] x, double[::1] f)
+
+cdef class linear_friction_nd(cyfunc_nd):
+    cdef double gamma
