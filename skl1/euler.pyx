@@ -1,6 +1,6 @@
 import numpy as np
 cimport numpy as np
-from libc.math cimport sqrt
+from libc.math cimport sqrt, cos, sin
 from libc.stdint cimport uint64_t
 
 from threefry cimport rng
@@ -173,3 +173,42 @@ def integrate_nd(double[::1] x, double[::1] v, double D, double dt, int interval
         v_out[t_idx1] = v
 
     return np.asarray(x_out), np.asarray(v_out)
+
+def integrate_OD_2d_theta(double[::1] x, double th, double mu, double D, double v0, double Dr, double dt, int interval, int steps, f=None, seed=None):
+    cdef cyfunc_nd cy_f, cy_g
+    cdef int t_idx1, t_idx2, j, n_dims
+    cdef double noise, th_noise
+
+    assert x.shape[0]==2
+
+    r = rng(seed)
+
+    if f is None:
+        cy_f = cyfunc_nd()
+    elif isinstance(f, cyfunc_nd):
+        cy_f = f
+    elif callable(f):
+        cy_f = pyfunc_nd(f)
+    else:
+        raise ValueError("f should be a callable or a cyfunc_nd")
+
+    noise = sqrt(2*D*dt)
+    th_noise = sqrt(2*Dr*dt)
+    n_dims = x.shape[0]
+
+    cdef double[::1] force = np.zeros(n_dims)
+
+    cdef double[:,::1] x_out = np.empty((steps, n_dims), dtype=float)
+    cdef double[::1] th_out = np.empty((steps,), dtype=float)
+
+    for t_idx1 in range(steps):
+        for t_idx2 in range(interval):
+            cy_f.force(x, force)
+            th = th + th_noise*r.random_normal()
+            x[0] = x[0] + (mu*force[0] + cos(th)*v0)*dt + noise*r.random_normal()
+            x[1] = x[1] + (mu*force[1] + sin(th)*v0)*dt + noise*r.random_normal()
+
+        x_out[t_idx1] = x
+        th_out[t_idx1] = th
+
+    return np.asarray(x_out), np.asarray(th_out)
