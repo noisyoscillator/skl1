@@ -43,7 +43,7 @@ cdef class linear_friction(cyfunc_d_d):
 cdef class cyfunc_nd:
     cpdef void force(self, double[::1] x, double[::1] f):
         cdef int i
-        for i in range(x.ndim):
+        for i in range(f.shape[0]):
             f[i] = 0
     def __init__(self):
         pass
