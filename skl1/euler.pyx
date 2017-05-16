@@ -29,6 +29,7 @@ def integrate(double x, double v, double D, double dt, int interval, int steps, 
     cdef moments_t moments
     r = rng(seed)
     moments = moments_t()
+    cdef double time
 
     if f is None:
         py_f = cyfunc_d_d()
@@ -55,10 +56,11 @@ def integrate(double x, double v, double D, double dt, int interval, int steps, 
 
     for i in range(steps):
         integrate_inner(&x, &v, D, dt, interval, py_f, py_g, r, moments)
+        time = i*interval*dt
         x_out[i] = x
         v_out[i] = v
         if callback is not None:
-            x, v = callback(x, v)
+            x, v = callback(x, v, time)
 
     return np.asarray(x_out), np.asarray(v_out), moments
 
