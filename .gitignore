@@ -5,3 +5,4 @@ dist/
 skl1.egg-info
 skl1/euler.c
 skl1/euler.html
+skl1/core.c

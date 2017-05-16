@@ -28,7 +28,12 @@ interval = 10
 dt = 0.01
 D = args.T*args.gamma
 
-x, v, moments = skl1.integrate(0, 0, D=D, dt=dt, interval=interval, steps=args.steps, g=args.gamma, seed=seed)
+def g(v):
+    return -args.gamma*v
+
+g = skl1.core.linear_friction(args.gamma)
+
+x, v, moments = skl1.integrate(0, 0, D=D, dt=dt, interval=interval, steps=args.steps, g=g, seed=seed)
 
 print(moments.mu_v())
 

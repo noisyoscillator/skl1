@@ -7,10 +7,14 @@ try:
 except:
     threefry_include = ''
 
-skl1_ext = cythonize(Extension("skl1.euler",
+skl1_ext = cythonize((Extension("skl1.core",
+                     sources=["skl1/core.pyx"],
+                     include_dirs=["skl1", threefry_include],
+                     ),
+                     Extension("skl1.euler",
                      sources=["skl1/euler.pyx"],
                      include_dirs=["skl1", threefry_include],
-                     ))
+                     )))
 
 setup(name='skl1',
       version='0.1.0.dev0',
@@ -20,5 +24,5 @@ setup(name='skl1',
       packages=['skl1'],
       ext_modules = skl1_ext,
       setup_requires=['cython', 'threefry'],
-      package_data={'skl1': ['euler.pxd']},
+      package_data={'skl1': ['core.pxd', 'euler.pxd']},
       )
